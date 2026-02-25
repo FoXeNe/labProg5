@@ -15,8 +15,22 @@ fun main() {
     println("введите имя")
     val name = readLine() ?: "default"
 
-    println("введите цену")
-    val price = readLine()?.toLongOrNull() ?: 0L
+    var price: Long?
+
+    do {
+        println("введите цену:")
+        var input = readLine()
+
+        price = input?.toLongOrNull()
+
+        if (price == null) {
+            println("цена должна быть числом")
+        } else if (price <= 0) {
+            println("цена должна быть больше 0")
+            price = null
+        }
+    }
+    while (price == null)
 
     val newProduct =
         Product(
