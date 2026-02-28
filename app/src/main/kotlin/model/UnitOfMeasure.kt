@@ -1,4 +1,4 @@
-package lab5.model
+package model
 
 enum class UnitOfMeasure {
     KILOGRAMS,

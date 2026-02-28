@@ -1,8 +1,7 @@
-package lab5.command
+package command
 
-interface CommandInterface {
+interface CommandHandler {
     val name: String
     val description: String
-
     fun execute(args: String? = null)
 }

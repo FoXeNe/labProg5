@@ -1,4 +1,4 @@
-package lab5.model
+package model
 
 data class Coordinates(
     val x: Long, // не может быть null

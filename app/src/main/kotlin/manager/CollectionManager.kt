@@ -1,6 +1,6 @@
-package lab5.manager
+package manager
 
-import lab5.model.Product
+import model.Product
 import java.util.LinkedList
 
 class CollectionManager {

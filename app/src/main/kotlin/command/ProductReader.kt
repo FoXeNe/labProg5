@@ -1,9 +1,9 @@
-package lab5.command
+package command
 
-import lab5.manager.CollectionManager
-import lab5.model.Coordinates
-import lab5.model.Organization
-import lab5.model.Product
+import manager.CollectionManager
+import model.Coordinates
+import model.Organization
+import model.Product
 import java.time.ZonedDateTime
 import java.util.LinkedList
 import kotlin.text.toLong
