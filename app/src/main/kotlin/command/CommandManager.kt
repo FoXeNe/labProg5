@@ -4,10 +4,22 @@ import command.commands.*
 import io.IOHandler
 
 class CommandManager {
-    fun initCommand(command: String, io: IOHandler) {
-        when (command) {
-            "add" -> Add(io).execute()
-            "exit" -> Exit(io).execute()
+    private val commands = mutableMapOf<String, CommandHandler>()
+
+    fun register(command: CommandHandler) {
+        commands[command.name] = command
+    }
+
+    fun initCommand(
+        input: String,
+        io: IOHandler,
+    ) {
+        val command = commands[input]
+
+        if (command != null) {
+            command?.execute()
+        } else {
+            io.println("команда не найдена")
         }
     }
 }
