@@ -1,9 +1,13 @@
 package lab5
 
-import lab5.command.InputManager
+import lab5.command.CommandManager
 
 fun main() {
-    val input = InputManager()
+    val commandManager = CommandManager()
 
-    input.productInput()
+    while (true) {
+        val input = readlnOrNull().toString()
+
+        commandManager.initCommand(input)
+    }
 }
