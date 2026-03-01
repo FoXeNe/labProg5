@@ -1,18 +1,20 @@
 package app
 
-import command.commands.*
 import command.CommandManager
-import manager.CollectionManager
+import command.commands.Add
+import command.commands.Exit
 import io.IOHandler
+import manager.CollectionManager
 
 class AppInitializer {
     fun setup(
         manager: CommandManager,
         io: IOHandler,
+        app: AppExecutor,
     ) {
         val collectionManager = CollectionManager(io)
 
         manager.register(Add(io, collectionManager))
-        manager.register(Exit(io))
+        manager.register(Exit(io) { app.stop() })
     }
 }

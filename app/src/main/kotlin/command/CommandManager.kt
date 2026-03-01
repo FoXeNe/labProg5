@@ -1,6 +1,5 @@
 package command
 
-import command.commands.*
 import io.IOHandler
 
 class CommandManager {
