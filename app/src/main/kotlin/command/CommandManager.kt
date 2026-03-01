@@ -4,9 +4,9 @@ import command.commands.*
 import io.IOHandler
 
 class CommandManager {
-    private val commands = mutableMapOf<String, CommandHandler>()
+    private val commands = mutableMapOf<String, Command>()
 
-    fun register(command: CommandHandler) {
+    fun register(command: Command) {
         commands[command.name] = command
     }
 

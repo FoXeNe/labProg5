@@ -10,7 +10,7 @@ import kotlin.text.toLong
 import kotlin.text.toLongOrNull
 
 class InputHandler {
-    fun productInput(): Product {
+    fun read(): Product {
         println("введите имя")
         val name = readLine() ?: "default"
 

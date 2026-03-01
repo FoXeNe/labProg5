@@ -1,12 +1,12 @@
 package command.commands
 
-import command.CommandHandler
+import command.Command
 import io.IOHandler
 import kotlin.system.exitProcess
 
 class Exit(
     private val io: IOHandler,
-) : CommandHandler {
+) : Command {
     override val name = "exit"
     override val description = "exit"
 
