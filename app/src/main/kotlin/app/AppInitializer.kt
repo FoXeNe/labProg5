@@ -2,6 +2,7 @@ package app
 
 import command.commands.*
 import command.CommandManager
+import manager.CollectionManager
 import io.IOHandler
 
 class AppInitializer {
@@ -9,7 +10,9 @@ class AppInitializer {
         manager: CommandManager,
         io: IOHandler,
     ) {
-        manager.register(Add(io))
+        val collectionManager = CollectionManager(io)
+
+        manager.register(Add(io, collectionManager))
         manager.register(Exit(io))
     }
 }
