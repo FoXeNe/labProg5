@@ -4,7 +4,9 @@ import command.CommandHandler
 import io.IOHandler
 import kotlin.system.exitProcess
 
-class Exit(private val io: IOHandler) : CommandHandler{
+class Exit(
+    private val io: IOHandler,
+) : CommandHandler {
     override val name = "exit"
     override val description = "exit"
 
