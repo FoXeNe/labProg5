@@ -21,7 +21,7 @@ class ProductReader(
 
         do {
             io.println("введите цену:")
-            var input = io.readLine()
+            val input = io.readLine()
 
             price = input?.toLongOrNull()
 
@@ -32,12 +32,30 @@ class ProductReader(
         }
         while (price == null)
 
+        // coordinates
+        var coordx: Long? = null
+        while (coordx == null) {
+            io.println("введите x")
+            val inputx = io.readLine()
+            coordx = inputx?.toLongOrNull()
+
+            if (coordx == null) io.println("x должен быть не null")
+        }
+
+        var coordy: Float? = null
+        while (coordy == null) {
+            io.println("введите y")
+            val inputy = io.readLine()
+            coordy = inputy?.toFloatOrNull()
+
+            if (coordy == null) io.println("y должен быть не null")
+        }
+
         val newProduct =
             Product(
                 id = 1,
                 name = name,
-                // TODO: do this coordinates section
-                coordinates = Coordinates(10L, 10F),
+                coordinates = Coordinates(coordx, coordy),
                 creationDate = ZonedDateTime.now(),
                 price = price,
                 unitOfMeasure = null,
