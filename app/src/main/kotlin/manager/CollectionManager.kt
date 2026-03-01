@@ -8,9 +8,12 @@ class CollectionManager(
     private val io: IOHandler,
 ) {
     private val list = LinkedList<Product>()
+    private var currId = 1L
 
     fun addProduct(product: Product) {
-        list.add(product)
+        val productWithId = product.copy(id = currId)
+        list.add(productWithId)
+        currId++
         io.println(list.toString())
     }
 }
