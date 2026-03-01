@@ -1,5 +1,6 @@
 package command
 
+import io.IOHandler
 import manager.CollectionManager
 import model.Coordinates
 import model.Organization
@@ -9,21 +10,23 @@ import java.util.LinkedList
 import kotlin.text.toLong
 import kotlin.text.toLongOrNull
 
-class InputHandler {
+class ProductReader(
+    private val io: IOHandler,
+) {
     fun read(): Product {
-        println("введите имя")
-        val name = readLine() ?: "default"
+        io.println("введите имя")
+        val name = io.readLine() ?: "default"
 
         var price: Long?
 
         do {
-            println("введите цену:")
-            var input = readLine()
+            io.println("введите цену:")
+            var input = io.readLine()
 
             price = input?.toLongOrNull()
 
             if (price == null || price <= 0) {
-                println("цена должна быть больше 0")
+                io.println("цена должна быть больше 0")
                 price = null
             }
         }

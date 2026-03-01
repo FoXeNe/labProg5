@@ -12,6 +12,6 @@ class Add(
 
     override fun execute(args: String?) {
         io.println("добавляем продукт")
-        ProductReader().read()
+        ProductReader(io).read()
     }
 }
