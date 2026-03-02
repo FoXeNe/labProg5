@@ -2,7 +2,6 @@ package reader
 
 import io.IOHandler
 import manager.CollectionManager
-import model.Organization
 import model.Product
 import reader.CoordinatesReader
 import java.time.ZonedDateTime
@@ -14,35 +13,42 @@ class ProductReader(
     private val io: IOHandler,
 ) {
     fun read(): Product {
-        io.println("введите имя")
-        val name = io.readLine() ?: "default"
-
-        var price: Long?
-
-        do {
-            io.println("введите цену:")
-            val input = io.readLine()
-
-            price = input?.toLongOrNull()
-
-            if (price == null || price <= 0) {
-                io.println("цена должна быть больше 0")
-                price = null
-            }
-        }
-        while (price == null)
-
         val newProduct =
             Product(
                 id = 1,
-                name = name,
+                name = nameInput(),
                 coordinates = CoordinatesReader(io).read(),
                 creationDate = ZonedDateTime.now(),
-                price = price,
+                price = priceInput(),
                 unitOfMeasure = null,
-                // TODO: do this Organization section
                 manufacturer = Organization(1L, "test", "testtest", 10L),
             )
         return newProduct
+    }
+
+    fun nameInput(): String {
+        var name: String? = null
+        while (name == null) {
+            io.println("введите имя")
+            name = io.readLine()
+            if (name !is String || name == "") {
+                io.println("имя должно быть string и иметь хотя бы один символ")
+                name = null
+            }
+        }
+        return name
+    }
+
+    fun priceInput(): Long {
+        var price: Long? = null
+        while (price == null) {
+            io.println("введите цену")
+            price = io.readLine()?.toLongOrNull()
+            if (price !is Long) {
+                io.println("цена должна быть long")
+                price = null
+            }
+        }
+        return price
     }
 }
