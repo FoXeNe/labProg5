@@ -1,9 +1,9 @@
 package command.commands
 
 import command.Command
-import command.ProductReader
 import io.IOHandler
 import manager.CollectionManager
+import reader.ProductReader
 
 class Add(
     private val io: IOHandler,
