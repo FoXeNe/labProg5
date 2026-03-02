@@ -7,17 +7,10 @@ class OrganizationReader(
     private val io: IOHandler,
 ) {
     fun read(): Organization {
-        val id = 1L
+        val name = io.readString("введите название")
+        val fullName = io.readString("введите полное название")
+        val employees = io.readLong("введите количество участников")
 
-        io.println("введите название")
-        val name = io.readLine().toString()
-
-        io.println("введите полное имя")
-        val fullName = io.readLine().toString()
-
-        io.println("введите количество участников")
-        val employees = io.readLine()!!.toLong()
-
-        return Organization(id, name, fullName, employees)
+        return Organization(1L, name, fullName, employees)
     }
 }

@@ -17,39 +17,13 @@ class ProductReader(
         val newProduct =
             Product(
                 id = 1,
-                name = nameInput(),
+                name = io.readString("введите название"),
                 coordinates = CoordinatesReader(io).read(),
                 creationDate = ZonedDateTime.now(),
-                price = priceInput(),
+                price = io.readLong("введите цену"),
                 unitOfMeasure = null,
                 organization = OrganizationReader(io).read(),
             )
         return newProduct
-    }
-
-    fun nameInput(): String {
-        var name: String? = null
-        while (name == null) {
-            io.println("введите имя")
-            name = io.readLine()
-            if (name !is String || name == "") {
-                io.println("имя должно быть string и иметь хотя бы один символ")
-                name = null
-            }
-        }
-        return name
-    }
-
-    fun priceInput(): Long {
-        var price: Long? = null
-        while (price == null) {
-            io.println("введите цену")
-            price = io.readLine()?.toLongOrNull()
-            if (price !is Long) {
-                io.println("цена должна быть long")
-                price = null
-            }
-        }
-        return price
     }
 }
