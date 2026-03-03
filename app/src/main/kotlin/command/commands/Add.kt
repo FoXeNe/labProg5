@@ -15,6 +15,6 @@ class Add(
     override fun execute() {
         io.println("добавляем продукт")
         collectionManager.addProduct(ProductReader(io).read())
-        io.println(collectionManager.getList().toString())
+        io.println(collectionManager.getCollection().toString())
     }
 }

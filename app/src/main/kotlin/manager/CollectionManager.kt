@@ -24,5 +24,5 @@ class CollectionManager(
         return res
     }
 
-    fun getList(): LinkedList<Product> = list
+    fun getCollection(): LinkedList<Product> = list
 }
