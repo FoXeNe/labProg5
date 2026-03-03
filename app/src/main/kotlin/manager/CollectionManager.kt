@@ -2,6 +2,7 @@ package manager
 
 import io.IOHandler
 import model.Product
+import java.time.ZonedDateTime
 import java.util.LinkedList
 
 class CollectionManager(
@@ -10,6 +11,7 @@ class CollectionManager(
     private val list = LinkedList<Product>()
     private var currProductId = 1L
     private var currOrgId = 1L
+    private var initDate = ZonedDateTime.now()
 
     fun addProduct(product: Product) {
         list.add(generateId(product))
@@ -24,6 +26,13 @@ class CollectionManager(
             )
         return res
     }
+
+    fun getInfoString(): String =
+        """
+        тип: ${list.javaClass.name}
+        дата инициализации: $initDate
+        количество элементов: ${list.size}
+      """
 
     fun getCollection(): LinkedList<Product> = list
 }
