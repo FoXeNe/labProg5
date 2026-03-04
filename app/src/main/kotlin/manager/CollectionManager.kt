@@ -38,10 +38,7 @@ class CollectionManager(
         id: Long,
         newProduct: Product,
     ) {
-        val index =
-            list.indexOfFirst {
-                it.id == id
-            }
+        val index = list.indexOfFirst { it.id == id }
 
         val old = list[index]
 
@@ -54,6 +51,12 @@ class CollectionManager(
 
         list[index] = updated
         io.println("элемент обновлен")
+    }
+
+    fun removeById(id: Long) {
+        val index = list.indexOfFirst { it.id == id }
+        list.removeAt(index)
+        io.println("элемент удален")
     }
 
     fun getCollection(): LinkedList<Product> = list
