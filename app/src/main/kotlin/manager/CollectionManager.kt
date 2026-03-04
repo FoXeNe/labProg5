@@ -34,6 +34,28 @@ class CollectionManager(
         количество элементов: ${list.size}
       """
 
+    fun updateById(
+        id: Long,
+        newProduct: Product,
+    ) {
+        val index =
+            list.indexOfFirst {
+                it.id == id
+            }
+
+        val old = list[index]
+
+        val updated =
+            newProduct.copy(
+                id = old.id,
+                creationDate = old.creationDate,
+                manufacturer = newProduct.manufacturer.copy(id = old.manufacturer.id),
+            )
+
+        list[index] = updated
+        io.println("элемент обновлен")
+    }
+
     fun getCollection(): LinkedList<Product> = list
 
     fun clear() {

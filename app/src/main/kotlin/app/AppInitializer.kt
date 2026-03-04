@@ -7,6 +7,7 @@ import command.commands.Exit
 import command.commands.Help
 import command.commands.Info
 import command.commands.Show
+import command.commands.Update
 import io.IOHandler
 import manager.CollectionManager
 
@@ -24,5 +25,6 @@ class AppInitializer {
         commandManager.register(Help(io, commandManager))
         commandManager.register(Show(io, collectionManager))
         commandManager.register(Info(io, collectionManager))
+        commandManager.register(Update(io, collectionManager))
     }
 }
