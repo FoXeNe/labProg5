@@ -35,4 +35,8 @@ class CollectionManager(
       """
 
     fun getCollection(): LinkedList<Product> = list
+
+    fun clear() {
+        list.clear()
+    }
 }

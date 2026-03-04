@@ -12,7 +12,6 @@ class Clear(
     override val description = "clear colletion"
 
     override fun execute(args: String) {
-        collectionManager.getCollection().clear()
-        io.println(collectionManager.getCollection().toString())
+        collectionManager.clear()
     }
 }
