@@ -11,7 +11,7 @@ class Info(
     override val name = "info"
     override val description = "show collection info"
 
-    override fun execute() {
+    override fun execute(args: String) {
         io.println(collectionManager.getInfoString())
     }
 }

@@ -11,7 +11,7 @@ class Help(
     override val name = "help"
     override val description = "show avaliable commands"
 
-    override fun execute() {
+    override fun execute(args: String) {
         for (command in commandManager.getCommands().values) {
             io.println("${command.name}: ${command.description}")
         }

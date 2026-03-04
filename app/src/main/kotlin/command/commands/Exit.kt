@@ -11,7 +11,7 @@ class Exit(
     override val name = "exit"
     override val description = "stop app execution"
 
-    override fun execute() {
+    override fun execute(args: String) {
         io.println("завершение процесса")
         stop()
     }

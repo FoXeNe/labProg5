@@ -11,7 +11,7 @@ class Show(
     override val name = "show"
     override val description = "show collection elements"
 
-    override fun execute() {
+    override fun execute(args: String) {
         if (collectionManager.getCollection().isNotEmpty()) {
             for (product in collectionManager.getCollection()) {
                 io.println(product.toString())

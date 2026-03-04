@@ -13,10 +13,18 @@ class CommandManager {
         input: String,
         io: IOHandler,
     ) {
-        val command = commands[input]
+        val resInput = input.trim().split(" ")
+        val name = resInput[0]
+        var args: String
+        if (resInput.size > 1) {
+            args = resInput[1]
+        } else {
+            args = " "
+        }
+        val command = commands[name]
 
         if (command != null) {
-            command?.execute()
+            command.execute(args)
         } else {
             io.println("команда не найдена")
         }
