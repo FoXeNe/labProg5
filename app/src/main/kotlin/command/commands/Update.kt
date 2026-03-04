@@ -21,6 +21,7 @@ class Update(
 
         if (collectionManager.getCollection().none { it.id == id }) {
             io.println("элемент с id=$id не найден")
+            return
         }
         val newProduct = ProductReader(io).read()
 
