@@ -1,14 +1,14 @@
 package app
 
-import app.AppInitializer
 import io.ConsoleHandler
+import io.IOWrapper
 import manager.CommandManager
 
 class AppExecutor {
     var interactiveMode = true
 
     fun exec() {
-        val io = ConsoleHandler()
+        val io = IOWrapper(ConsoleHandler())
         val manager = CommandManager()
 
         AppInitializer().setup(manager, io, this)
@@ -16,8 +16,10 @@ class AppExecutor {
         io.println("введите help для получения информации о командах")
 
         while (interactiveMode) {
-            val input = readln()
-            manager.initCommand(input, io)
+            val input = io.readLine() ?: break
+            if (input.isNotBlank()) {
+                manager.initCommand(input, io)
+            }
         }
     }
 

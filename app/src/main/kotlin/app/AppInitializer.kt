@@ -9,6 +9,7 @@ class AppInitializer {
     fun setup(
         commandManager: CommandManager,
         io: IOWrapper,
+        app: AppExecutor,
     ) {
         val collectionManager = CollectionManager(io)
 
@@ -20,5 +21,6 @@ class AppInitializer {
         commandManager.register(RemoveById(io, collectionManager))
         commandManager.register(RemoveFirst(io, collectionManager))
         commandManager.register(Update(io, collectionManager))
+        commandManager.register(Exit(io, { app.stop() }))
     }
 }
