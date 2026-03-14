@@ -107,4 +107,14 @@ class CollectionManager(
         }
         return result
     }
+
+    fun filterGreaterThanManufacturer(manufacturerName: String): List<Product> {
+        val result = mutableListOf<Product>()
+        for (product in list) {
+            if (product.manufacturer.name > manufacturerName) {
+                result.add(product)
+            }
+        }
+        return result
+    }
 }

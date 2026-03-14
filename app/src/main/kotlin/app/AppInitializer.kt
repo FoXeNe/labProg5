@@ -13,7 +13,6 @@ class AppInitializer {
         io: IOWrapper,
         app: AppExecutor,
     ) {
-
         val filePath = System.getenv(ENV_FILE)
         if (filePath == null) {
             io.println("$ENV_FILE не задан")
@@ -35,5 +34,6 @@ class AppInitializer {
         commandManager.register(Save(io, collectionManager))
         commandManager.register(SumOfPrice(io, collectionManager))
         commandManager.register(FilterByManufacturer(io, collectionManager))
+        commandManager.register(FilterGreaterThanManufacturer(io, collectionManager))
     }
 }
