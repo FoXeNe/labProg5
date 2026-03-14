@@ -34,5 +34,6 @@ class AppInitializer {
         commandManager.register(Update(io, collectionManager))
         commandManager.register(Save(io, collectionManager))
         commandManager.register(SumOfPrice(io, collectionManager))
+        commandManager.register(FilterByManufacturer(io, collectionManager))
     }
 }

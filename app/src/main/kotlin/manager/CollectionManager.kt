@@ -97,4 +97,14 @@ class CollectionManager(
         }
         return res
     }
+
+    fun filterByManufacturer(manufacturerName: String): List<Product> {
+        val result = mutableListOf<Product>()
+        for (product in list) {
+            if (product.manufacturer.name == manufacturerName) {
+                result.add(product)
+            }
+        }
+        return result
+    }
 }
