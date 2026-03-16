@@ -7,35 +7,16 @@ import java.util.LinkedList
 
 class CollectionManager(
     private val io: IOHandler,
-    private val filePath: String?,
+    collection: LinkedList<Product> = LinkedList(),
 ) {
-    private val list = LinkedList<Product>()
-    private var currProductId = 1L
-    private var currOrgId = 1L
+    private val list = LinkedList<Product>(collection)
+    private var currProductId: Long
+    private var currOrgId: Long
     private val initDate: ZonedDateTime = ZonedDateTime.now()
 
     init {
-        if (filePath != null) loadFromFile(filePath)
-    }
-
-    fun loadFromFile(path: String) {
-        val loaded = JsonManager(path).readCollection()
-        list.clear()
-        list.addAll(loaded)
-        if (list.isNotEmpty()) {
-            currProductId = list.maxOf { it.id } + 1
-            currOrgId = list.maxOf { it.manufacturer.id } + 1
-        }
-        io.println("коллекция загружена из файла: $path")
-    }
-
-    fun saveToFile(path: String? = filePath) {
-        if (path == null) {
-            io.println("путь к файлу не задан")
-            return
-        }
-        JsonManager(path).writeCollection(list)
-        io.println("коллекция сохранена в файл: $path")
+        currProductId = if (list.isEmpty()) 1L else list.maxOf { it.id } + 1
+        currOrgId = if (list.isEmpty()) 1L else list.maxOf { it.manufacturer.id } + 1
     }
 
     fun addProduct(product: Product) {

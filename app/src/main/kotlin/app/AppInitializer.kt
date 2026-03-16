@@ -4,6 +4,8 @@ import command.commands.*
 import io.IOWrapper
 import manager.CollectionManager
 import manager.CommandManager
+import manager.JsonManager
+import java.util.LinkedList
 
 const val ENV_FILE = "COLLECTION_FILE"
 
@@ -14,10 +16,17 @@ class AppInitializer {
         app: AppExecutor,
     ) {
         val filePath = System.getenv(ENV_FILE)
-        if (filePath == null) {
-            io.println("$ENV_FILE не задан")
-        }
-        val collectionManager = CollectionManager(io, filePath)
+
+        val collection =
+            if (filePath != null) {
+                io.println("коллекция загружена")
+                JsonManager(filePath).readCollection()
+            } else {
+                io.println("коллекция не загружена")
+                LinkedList()
+            }
+
+        val collectionManager = CollectionManager(io, collection)
 
         commandManager.register(Add(io, collectionManager))
         commandManager.register(Clear(io, collectionManager))
@@ -30,7 +39,7 @@ class AppInitializer {
         commandManager.register(Exit(io, { app.stop() }))
         commandManager.register(ExecuteScript(io, commandManager))
         commandManager.register(Show(io, collectionManager))
-        commandManager.register(Save(io, collectionManager))
+        commandManager.register(Save(io, collectionManager, filePath))
         commandManager.register(SumOfPrice(io, collectionManager))
         commandManager.register(FilterByManufacturer(io, collectionManager))
         commandManager.register(FilterGreaterThanManufacturer(io, collectionManager))
