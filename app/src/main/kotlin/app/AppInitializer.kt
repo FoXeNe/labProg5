@@ -30,7 +30,6 @@ class AppInitializer {
         commandManager.register(Exit(io, { app.stop() }))
         commandManager.register(ExecuteScript(io, commandManager))
         commandManager.register(Show(io, collectionManager))
-        commandManager.register(Update(io, collectionManager))
         commandManager.register(Save(io, collectionManager))
         commandManager.register(SumOfPrice(io, collectionManager))
         commandManager.register(FilterByManufacturer(io, collectionManager))
