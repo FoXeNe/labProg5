@@ -21,12 +21,6 @@ class ExecuteScript(
             return
         }
 
-        val file = File(fileName)
-        if (!file.exists()) {
-            io.println("файл не найден")
-            return
-        }
-
         val scriptHandler =
             try {
                 ScriptHandler(fileName)
