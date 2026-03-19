@@ -10,6 +10,7 @@ import java.io.FileNotFoundException
 class ExecuteScript(
     private val io: IOWrapper,
     private val commandManager: CommandManager,
+    private val executingFile: MutableSet<String> = mutableSetOf(),
 ) : Command {
     override val name = "execute_script"
     override val description = "read and execute script"
@@ -21,6 +22,18 @@ class ExecuteScript(
             return
         }
 
+        val canonicalPath =
+            try {
+                File(fileName).canonicalPath
+            } catch (e: Exception) {
+                fileName
+            }
+
+        if (canonicalPath in executingFile) {
+            io.println("рекурсия, не выполняйте файл в нем же")
+            return
+        }
+
         val scriptHandler =
             try {
                 ScriptHandler(fileName)
@@ -29,6 +42,7 @@ class ExecuteScript(
                 return
             }
 
+        executingFile.add(canonicalPath)
         val previousSwap = io.swapHandler(scriptHandler)
         try {
             var line = io.readLine()
@@ -42,6 +56,7 @@ class ExecuteScript(
         } finally {
             io.swapHandler(previousSwap)
             scriptHandler.close()
+            executingFile.remove(canonicalPath)
         }
     }
 }
