@@ -47,6 +47,7 @@ class FileManager(
         if (answer.isNullOrEmpty() || answer == "y" || answer == "yes") {
             return try {
                 val tempPath = Files.createTempFile("collection_", ".json").toString()
+                File(tempPath).deleteOnExit()
                 JsonManager(tempPath).writeCollection(collection)
                 currentFilePath = tempPath
                 usingTempFile = true
