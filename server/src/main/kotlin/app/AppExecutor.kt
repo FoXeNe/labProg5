@@ -4,6 +4,8 @@ import io.ConsoleHandler
 import io.IOWrapper
 import manager.CommandManager
 import manager.ConnectionManager
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 class AppExecutor {
     var interactiveMode = true
@@ -13,16 +15,19 @@ class AppExecutor {
         val manager = CommandManager()
         val connManager = ConnectionManager("localhost", 9090)
 
-        connManager.exec()
-
         AppInitializer().setup(manager, io, this)
 
-        io.println("введите help для получения информации о командах")
+        io.println("сервер запущен, введите help для получения информации о командах")
+
+        val consoleReader = BufferedReader(InputStreamReader(System.`in`))
 
         while (interactiveMode) {
-            val input = io.readLine() ?: break
-            if (input.isNotBlank()) {
-                manager.initCommand(input, io)
+            connManager.exec()
+            if (consoleReader.ready()) {
+                val input = consoleReader.readLine()
+                if (!input.isNullOrBlank()) {
+                    manager.initCommand(input, io)
+                }
             }
         }
     }
