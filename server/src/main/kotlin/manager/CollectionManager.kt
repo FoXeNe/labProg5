@@ -4,6 +4,7 @@ import io.IOHandler
 import model.Product
 import java.time.ZonedDateTime
 import java.util.LinkedList
+import java.util.stream.Collectors
 
 class CollectionManager(
     private val io: IOHandler,
@@ -77,29 +78,29 @@ class CollectionManager(
 
     fun getCollection(): LinkedList<Product> = list
 
-    fun getMinProduct(): Product? = list.minOrNull()
+    fun getMinProduct(): Product? =
+        list
+            .stream()
+            .min(Comparator.naturalOrder())
+            .orElse(null)
 
-    fun sumOfPrice(): Long = list.sumOf { it.price }
+    fun sumOfPrice(): Long =
+        list
+            .stream()
+            .mapToLong { it.price }
+            .sum()
 
-    fun filterByManufacturer(manufacturerName: String): List<Product> {
-        val result = mutableListOf<Product>()
-        for (product in list) {
-            if (product.manufacturer.name == manufacturerName) {
-                result.add(product)
-            }
-        }
-        return result
-    }
+    fun filterByManufacturer(manufacturerName: String): List<Product> =
+        list
+            .stream()
+            .filter { it.manufacturer.name == manufacturerName }
+            .collect(Collectors.toList())
 
-    fun filterGreaterThanManufacturer(manufacturerName: String): List<Product> {
-        val result = mutableListOf<Product>()
-        for (product in list) {
-            if (product.manufacturer.name > manufacturerName) {
-                result.add(product)
-            }
-        }
-        return result
-    }
+    fun filterGreaterThanManufacturer(manufacturerName: String): List<Product> =
+        list
+            .stream()
+            .filter { it.manufacturer.name > manufacturerName }
+            .collect(Collectors.toList())
 
     fun replayEntry(entry: WalEntry) {
         when (entry) {
