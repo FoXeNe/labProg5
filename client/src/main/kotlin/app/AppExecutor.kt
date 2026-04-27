@@ -20,7 +20,9 @@ class AppExecutor {
         while (interactiveMode) {
             val input = io.readLine() ?: break
             if (input.isNotBlank()) {
-                manager.initCommand(input, io)
+                val result = manager.initCommand(input)
+                io.println(result.message)
+                result.collection?.forEach { io.println(it.toString()) }
             }
         }
     }
