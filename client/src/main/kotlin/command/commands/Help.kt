@@ -1,19 +1,20 @@
 package command.commands
 
 import command.Command
-import io.IOHandler
 import manager.CommandManager
+import model.CommandResult
 
 class Help(
-    private val io: IOHandler,
     private val commandManager: CommandManager,
 ) : Command {
     override val name = "help"
     override val description = "show avaliable commands"
 
-    override fun execute(args: String) {
+    override fun execute(args: String): CommandResult {
+        var text = ""
         for (command in commandManager.getCommands().values) {
-            io.println("${command.name}: ${command.description}")
+            text += "${command.name}: ${command.description}\n"
         }
+        return CommandResult(true, text.trimEnd())
     }
 }

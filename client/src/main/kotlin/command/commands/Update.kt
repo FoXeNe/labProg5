@@ -3,6 +3,7 @@ package command.commands
 import command.Command
 import io.IOHandler
 import manager.NetworkManager
+import model.CommandResult
 import model.CommandType
 import model.Request
 import reader.ProductReader
@@ -14,18 +15,15 @@ class Update(
     override val name = "update"
     override val description = "update element by id"
 
-    override fun execute(args: String) {
+    override fun execute(args: String): CommandResult {
         val id = args.trim()
         if (id.isBlank() || id.toLongOrNull() == null) {
-            io.println("введите id, к примеру: update 5")
-            return
+            return CommandResult(false, "введите id, к примеру: update 5")
         }
         val product = ProductReader(io).read()
-        val response = network.sendRequest(Request(CommandType.UPDATE, argument = id, product = product))
-        if (response == null) {
-            io.println("сервер недоступен, попробуйте позже")
-        } else {
-            io.println(response.message)
-        }
+        val response =
+            network.sendRequest(Request(CommandType.UPDATE, argument = id, product = product))
+                ?: return CommandResult(false, "сервер недоступен")
+        return CommandResult(response.success, response.message, response.collection)
     }
 }

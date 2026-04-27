@@ -4,6 +4,7 @@ import command.Command
 import io.IOWrapper
 import io.ScriptHandler
 import manager.CommandManager
+import model.CommandResult
 import java.io.File
 import java.io.FileNotFoundException
 
@@ -15,11 +16,10 @@ class ExecuteScript(
     override val name = "execute_script"
     override val description = "read and execute script"
 
-    override fun execute(args: String) {
+    override fun execute(args: String): CommandResult {
         val fileName = args.trim()
         if (fileName.isBlank()) {
-            io.println("укажите имя файла, к примеру: execute_script script.txt")
-            return
+            return CommandResult(false, "укажите имя файла, к примеру: execute_script script.txt")
         }
 
         val canonicalPath =
@@ -30,16 +30,14 @@ class ExecuteScript(
             }
 
         if (canonicalPath in executingFile) {
-            io.println("рекурсия, не выполняйте файл в нем же")
-            return
+            return CommandResult(false, "рекурсия, не выполняйте файл в нем же")
         }
 
         val scriptHandler =
             try {
                 ScriptHandler(fileName)
             } catch (e: FileNotFoundException) {
-                io.println("не удалось открыть файл $fileName")
-                return
+                return CommandResult(false, "не удалось открыть файл")
             }
 
         executingFile.add(canonicalPath)
@@ -49,7 +47,9 @@ class ExecuteScript(
             while (line != null) {
                 if (line.isNotBlank()) {
                     io.println("> $line")
-                    commandManager.initCommand(line, io)
+                    val result = commandManager.initCommand(line)
+                    io.println(result.message)
+                    result.collection?.forEach { io.println(it.toString()) }
                 }
                 line = io.readLine()
             }
@@ -58,5 +58,7 @@ class ExecuteScript(
             scriptHandler.close()
             executingFile.remove(canonicalPath)
         }
+
+        return CommandResult(true, "скрипт выполнен")
     }
 }
