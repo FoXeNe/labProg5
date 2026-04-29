@@ -1,12 +1,43 @@
 services:
-  server:
+  server1:
+    container_name: server1
     build:
       context: ./server
       dockerfile: Dockerfile
     expose:
       - "9090"
-    deploy:
-      replicas: 3
+    environment:
+      - COLLECTION_FILE=/data/collection.json
+    volumes:
+      - collection_data:/data
+    networks:
+      - proxy_net
+
+  server2:
+    container_name: server2
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    expose:
+      - "9090"
+    environment:
+      - COLLECTION_FILE=/data/collection.json
+    volumes:
+      - collection_data:/data
+    networks:
+      - proxy_net
+
+  server3:
+    container_name: server3
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    expose:
+      - "9090"
+    environment:
+      - COLLECTION_FILE=/data/collection.json
+    volumes:
+      - collection_data:/data
     networks:
       - proxy_net
 
@@ -19,6 +50,12 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - proxy_net
+    depends_on:
+      - server1
+      - server2
+      - server3
+volumes:
+  collection_data:
 
 networks:
   proxy_net:
