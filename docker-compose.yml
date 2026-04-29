@@ -54,6 +54,21 @@ services:
       - server1
       - server2
       - server3
+
+  client:
+    container_name: client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    environment:
+      - SERVER_HOST=nginx
+      - SERVER_PORT=9090
+    networks:
+      - proxy_net
+    depends_on:
+      - nginx
+    stdin_open: true
+
 volumes:
   collection_data:
 
