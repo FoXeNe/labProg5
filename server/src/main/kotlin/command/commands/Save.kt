@@ -10,7 +10,7 @@ import model.Product
 class Save(
     private val collectionManager: CollectionManager,
     private val fileManager: FileManager,
-    private val walManager: WalManager,
+    private val walManager: WalManager?,
 ) : Command {
     override val name = "save"
     override val description = "save collection to the file"
@@ -25,14 +25,14 @@ class Save(
             val merged = fileManager.restoreMainFile(collection)
             if (merged != null) {
                 collectionManager.replaceCollection(merged)
-                walManager.clear()
+                walManager?.clear()
                 return CommandResult(true, "данные восстановлены в основной файл")
             }
         }
 
         return if (fileManager.tryWrite(collection)) {
             if (!fileManager.isUsingTempFile()) {
-                walManager.clear()
+                walManager?.clear()
                 CommandResult(true, "коллекция сохранена")
             } else {
                 CommandResult(true, "коллекция сохранена во временный файл")

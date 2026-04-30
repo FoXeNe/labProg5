@@ -7,6 +7,7 @@ import manager.CommandManager
 import manager.FileManager
 import manager.JsonManager
 import manager.RequestHandler
+import manager.SharedFileSync
 import manager.WalManager
 import model.Product
 import java.io.File
@@ -24,36 +25,51 @@ class AppInitializer {
         app: AppExecutor,
     ): RequestHandler {
         val filePath = System.getenv(ENV_FILE)
-        val walPath = createWalPath(filePath)
-        val walManager = WalManager(walPath)
-        val fileManager = FileManager(filePath, io)
-        var baseCollection: LinkedList<Product>
-        if (filePath == null) {
+
+        var sharedFileSync: SharedFileSync? = null
+        var walManager: WalManager? = null
+        val baseCollection: LinkedList<Product>
+
+        if (filePath != null) {
+            val file = File(filePath)
+            baseCollection =
+                if (file.exists() && file.length() > 0) {
+                    try {
+                        JsonManager(filePath).readCollection().also {
+                            logger.info("коллекция загружена из $filePath")
+                            io.println("коллекция загружена")
+                        }
+                    } catch (e: Exception) {
+                        logger.warning("не удалось загрузить коллекцию: ${e.message}")
+                        io.println("не удалось загрузить коллекцию из файла: ${e.message}")
+                        LinkedList()
+                    }
+                } else {
+                    LinkedList()
+                }
+        } else {
             logger.info("путь к файлу не задан")
             io.println("коллекция не загружена")
             baseCollection = LinkedList()
-        } else {
-            try {
-                baseCollection = JsonManager(filePath).readCollection()
-                logger.info("коллекция загружена из $filePath")
-                io.println("коллекция загружена")
-            } catch (e: Exception) {
-                logger.warning("не удалось загрузить коллекцию: ${e.message}")
-                io.println("не удалось загрузить коллекцию из файла: ${e.message}")
-                baseCollection = LinkedList()
-            }
+            val walPath = createWalPath(null)
+            walManager = WalManager(walPath)
         }
 
         val collectionManager = CollectionManager(io, baseCollection, walManager)
 
-        if (walManager.hasEntries()) {
-            val entries = walManager.readAll()
-            for (entry in entries) {
+        if (walManager != null && walManager.hasEntries()) {
+            for (entry in walManager.readAll()) {
                 collectionManager.replayEntry(entry)
             }
             logger.info("операции восстановлены из журнала")
             io.println("операции восстановлены из журнала")
         }
+
+        if (filePath != null) {
+            sharedFileSync = SharedFileSync(filePath, collectionManager, commandManager)
+        }
+
+        val fileManager = FileManager(filePath, io)
 
         commandManager.register(Add(io, collectionManager))
         commandManager.register(AddIfMin(io, collectionManager))
@@ -68,7 +84,7 @@ class AppInitializer {
         commandManager.register(Update(io, collectionManager))
         commandManager.register(Save(collectionManager, fileManager, walManager))
 
-        return RequestHandler(commandManager)
+        return RequestHandler(commandManager, sharedFileSync)
     }
 
     private fun createWalPath(mainFilePath: String?): String {

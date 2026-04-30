@@ -15,16 +15,24 @@ class CollectionManager(
     private var currProductId: Long
     private var currOrgId: Long
     private val initDate: ZonedDateTime = ZonedDateTime.now()
+    private var modified = false
 
     init {
         currProductId = if (list.isEmpty()) 1L else list.maxOf { it.id } + 1
         currOrgId = if (list.isEmpty()) 1L else list.maxOf { it.manufacturer.id } + 1
     }
 
+    fun wasModified(): Boolean = modified
+
+    fun resetModified() {
+        modified = false
+    }
+
     fun addProduct(product: Product) {
         val withId = generateId(product)
         walManager?.append(WalEntry.Add(withId))
         list.add(withId)
+        modified = true
         io.println("продукт добавлен")
     }
 
@@ -55,24 +63,28 @@ class CollectionManager(
             )
         walManager?.append(WalEntry.Update(id, updated))
         list[index] = updated
+        modified = true
         io.println("элемент обновлён")
     }
 
     fun removeById(id: Long) {
         walManager?.append(WalEntry.RemoveById(id))
         list.removeAll { it.id == id }
+        modified = true
         io.println("элемент удалён")
     }
 
     fun removeFirst() {
         walManager?.append(WalEntry.RemoveFirst)
         list.removeFirst()
+        modified = true
         io.println("первый элемент удалён")
     }
 
     fun clear() {
         walManager?.append(WalEntry.Clear)
         list.clear()
+        modified = true
         io.println("коллекция очищена")
     }
 
