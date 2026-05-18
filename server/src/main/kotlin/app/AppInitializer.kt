@@ -50,12 +50,6 @@ class AppInitializer {
 
         val collectionManager = CollectionManager(db, initialData)
 
-        if (filePath != null) {
-            sharedFileSync = SharedFileSync(filePath, collectionManager, commandManager)
-        }
-
-        val fileManager = FileManager(filePath, io)
-
         commandManager.register(Add(io, collectionManager))
         commandManager.register(AddIfMin(io, collectionManager))
         commandManager.register(Clear(collectionManager))
