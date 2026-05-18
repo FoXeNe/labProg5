@@ -17,6 +17,8 @@ class AppInitializer {
         commandManager.register(Exit { app.stop() })
         commandManager.register(ExecuteScript(io, commandManager))
 
+        commandManager.register(Register(io, network))
+        commandManager.register(Login(io, network))
         commandManager.register(Add(io, network))
         commandManager.register(AddIfMin(io, network))
         commandManager.register(Clear(network))

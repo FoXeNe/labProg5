@@ -9,13 +9,15 @@ class Clear(
     private val collectionManager: CollectionManager,
 ) : Command {
     override val name = "clear"
-    override val description = "clear colletion"
+    override val description = "clear your objects from collection"
 
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult {
-        collectionManager.clear()
-        return CommandResult(true, "коллекция очищена")
+        val owner = ownerLogin ?: return CommandResult(false, "требуется авторизация")
+        val count = collectionManager.clear(owner)
+        return CommandResult(true, "удалено элементов: $count")
     }
 }

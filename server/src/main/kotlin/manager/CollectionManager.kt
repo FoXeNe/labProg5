@@ -1,150 +1,137 @@
 package manager
 
-import io.IOHandler
 import model.Product
 import java.time.ZonedDateTime
 import java.util.LinkedList
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.stream.Collectors
+import kotlin.concurrent.withLock
 
 class CollectionManager(
-    private val io: IOHandler,
-    collection: LinkedList<Product> = LinkedList(),
-    private val walManager: WalManager? = null,
+    private val db: DatabaseManager,
+    initialData: List<Pair<Product, String>> = emptyList(),
 ) {
-    private val list = LinkedList<Product>(collection)
-    private var currProductId: Long
-    private var currOrgId: Long
+    private val list = LinkedList<Product>()
+    private val ownerMap = mutableMapOf<Long, String>()
+    private val lock = ReentrantReadWriteLock()
     private val initDate: ZonedDateTime = ZonedDateTime.now()
     private var modified = false
 
     init {
-        currProductId = if (list.isEmpty()) 1L else list.maxOf { it.id } + 1
-        currOrgId = if (list.isEmpty()) 1L else list.maxOf { it.manufacturer.id } + 1
+        for ((product, owner) in initialData) {
+            list.add(product)
+            ownerMap[product.id] = owner
+        }
     }
 
-    fun wasModified(): Boolean = modified
-
-    fun resetModified() {
-        modified = false
+    fun addProduct(product: Product, ownerLogin: String) {
+        val withId = db.insertProduct(product, ownerLogin)
+        lock.writeLock().withLock {
+            list.add(withId)
+            ownerMap[withId.id] = ownerLogin
+        }
     }
-
-    fun addProduct(product: Product) {
-        val withId = generateId(product)
-        walManager?.append(WalEntry.Add(withId))
-        list.add(withId)
-        modified = true
-        io.println("продукт добавлен")
-    }
-
-    fun generateId(product: Product): Product =
-        product.copy(
-            id = currProductId++,
-            manufacturer = product.manufacturer.copy(id = currOrgId++),
-        )
 
     fun getInfoString(): String =
-        """
-        тип: ${list.javaClass.name}
-        дата инициализации: $initDate
-        количество элементов: ${list.size}
-        """.trimIndent()
+        lock.readLock().withLock {
+            """
+            тип: ${list.javaClass.name}
+            дата инициализации: $initDate
+            количество элементов: ${list.size}
+            """.trimIndent()
+        }
 
     fun updateById(
         id: Long,
         newProduct: Product,
-    ) {
-        val index = list.indexOfFirst { it.id == id }
-        val old = list[index]
-        val updated =
-            newProduct.copy(
-                id = old.id,
-                creationDate = old.creationDate,
-                manufacturer = newProduct.manufacturer.copy(id = old.manufacturer.id),
-            )
-        walManager?.append(WalEntry.Update(id, updated))
-        list[index] = updated
-        modified = true
-        io.println("элемент обновлён")
-    }
+        ownerLogin: String,
+    ): Boolean =
+        lock.writeLock().withLock {
+            val index = list.indexOfFirst { it.id == id }
+            if (index < 0) return@withLock false
+            if (ownerMap[id] != ownerLogin) return@withLock false
+            val old = list[index]
+            val updated =
+                newProduct.copy(
+                    id = old.id,
+                    creationDate = old.creationDate,
+                    manufacturer = newProduct.manufacturer.copy(id = old.manufacturer.id),
+                )
+            if (!db.updateProduct(updated, ownerLogin)) return@withLock false
+            list[index] = updated
+            true
+        }
 
-    fun removeById(id: Long) {
-        walManager?.append(WalEntry.RemoveById(id))
-        list.removeAll { it.id == id }
-        modified = true
-        io.println("элемент удалён")
-    }
+    fun removeById(
+        id: Long,
+        ownerLogin: String,
+    ): Boolean =
+        lock.writeLock().withLock {
+            if (ownerMap[id] != ownerLogin) return@withLock false
+            if (!db.deleteProduct(id, ownerLogin)) return@withLock false
+            list.removeAll { it.id == id }
+            ownerMap.remove(id)
+            true
+        }
 
-    fun removeFirst() {
-        walManager?.append(WalEntry.RemoveFirst)
-        list.removeFirst()
-        modified = true
-        io.println("первый элемент удалён")
-    }
+    fun removeFirst(ownerLogin: String): Boolean =
+        lock.writeLock().withLock {
+            if (list.isEmpty()) return@withLock false
+            val first = list.first()
+            if (ownerMap[first.id] != ownerLogin) return@withLock false
+            if (!db.deleteProduct(first.id, ownerLogin)) return@withLock false
+            list.removeFirst()
+            ownerMap.remove(first.id)
+            true
+        }
 
-    fun clear() {
-        walManager?.append(WalEntry.Clear)
-        list.clear()
-        modified = true
-        io.println("коллекция очищена")
-    }
+    fun clear(ownerLogin: String): Int =
+        lock.writeLock().withLock {
+            val count = db.clearUserProducts(ownerLogin)
+            val toRemove = ownerMap.entries.filter { it.value == ownerLogin }.map { it.key }.toSet()
+            list.removeAll { it.id in toRemove }
+            toRemove.forEach { ownerMap.remove(it) }
+            count
+        }
 
-    fun getCollection(): LinkedList<Product> = list
+    fun getCollection(): LinkedList<Product> =
+        lock.readLock().withLock { LinkedList(list) }
 
     fun getMinProduct(): Product? =
-        list
-            .stream()
-            .min(Comparator.naturalOrder())
-            .orElse(null)
+        lock.readLock().withLock {
+            list
+                .stream()
+                .min(Comparator.naturalOrder())
+                .orElse(null)
+        }
 
     fun sumOfPrice(): Long =
-        list
-            .stream()
-            .mapToLong { it.price }
-            .sum()
+        lock.readLock().withLock {
+            list
+                .stream()
+                .mapToLong { it.price }
+                .sum()
+        }
 
     fun filterByManufacturer(manufacturerName: String): List<Product> =
-        list
-            .stream()
-            .filter { it.manufacturer.name == manufacturerName }
-            .collect(Collectors.toList())
+        lock.readLock().withLock {
+            list
+                .stream()
+                .filter { it.manufacturer.name == manufacturerName }
+                .collect(Collectors.toList())
+        }
 
     fun filterGreaterThanManufacturer(manufacturerName: String): List<Product> =
-        list
-            .stream()
-            .filter { it.manufacturer.name > manufacturerName }
-            .collect(Collectors.toList())
-
-    fun replayEntry(entry: WalEntry) {
-        when (entry) {
-            is WalEntry.Add -> {
-                list.add(entry.product)
-                if (entry.product.id >= currProductId) currProductId = entry.product.id + 1
-                if (entry.product.manufacturer.id >= currOrgId) currOrgId = entry.product.manufacturer.id + 1
-            }
-
-            is WalEntry.Update -> {
-                val index = list.indexOfFirst { it.id == entry.id }
-                if (index >= 0) list[index] = entry.product
-            }
-
-            is WalEntry.RemoveById -> {
-                list.removeAll { it.id == entry.id }
-            }
-
-            is WalEntry.RemoveFirst -> {
-                if (list.isNotEmpty()) list.removeFirst()
-            }
-
-            is WalEntry.Clear -> {
-                list.clear()
-            }
+        lock.readLock().withLock {
+            list
+                .stream()
+                .filter { it.manufacturer.name > manufacturerName }
+                .collect(Collectors.toList())
         }
-    }
 
-    fun replaceCollection(newCollection: LinkedList<Product>) {
-        list.clear()
-        list.addAll(newCollection)
-        currProductId = if (list.isEmpty()) 1L else list.maxOf { it.id } + 1
-        currOrgId = if (list.isEmpty()) 1L else list.maxOf { it.manufacturer.id } + 1
-    }
+    fun hasId(id: Long): Boolean =
+        lock.readLock().withLock { list.any { it.id == id } }
+
+    fun getOwner(id: Long): String? =
+        lock.readLock().withLock { ownerMap[id] }
 }

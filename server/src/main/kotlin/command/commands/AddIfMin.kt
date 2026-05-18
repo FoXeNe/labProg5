@@ -17,11 +17,13 @@ class AddIfMin(
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult {
+        val owner = ownerLogin ?: return CommandResult(false, "требуется авторизация")
         val p = product ?: ProductReader(io).read()
         val min = collectionManager.getMinProduct()
         return if (min == null || p < min) {
-            collectionManager.addProduct(p)
+            collectionManager.addProduct(p, owner)
             CommandResult(true, "продукт добавлен")
         } else {
             CommandResult(true, "цена не меньше минимальной")

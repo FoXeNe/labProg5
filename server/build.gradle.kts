@@ -31,6 +31,7 @@ dependencies {
     // This dependency is used by the application.
     implementation(libs.guava)
     implementation("com.google.code.gson:gson:2.11.0")
+    implementation("org.postgresql:postgresql:42.7.3")
 
     implementation(project(":common"))
 }

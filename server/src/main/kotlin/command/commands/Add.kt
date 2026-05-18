@@ -17,9 +17,11 @@ class Add(
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult {
+        val owner = ownerLogin ?: return CommandResult(false, "требуется авторизация")
         val p = product ?: ProductReader(io).read()
-        collectionManager.addProduct(p)
+        collectionManager.addProduct(p, owner)
         return CommandResult(true, "продукт добавлен")
     }
 }

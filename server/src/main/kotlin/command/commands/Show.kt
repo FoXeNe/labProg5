@@ -14,6 +14,7 @@ class Show(
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult {
         val sorted = collectionManager.getCollection().sorted()
         val msg =

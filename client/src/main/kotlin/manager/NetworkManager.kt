@@ -19,7 +19,27 @@ class NetworkManager(
     private var out = DataOutputStream(socket.getOutputStream())
     private var input = DataInputStream(socket.getInputStream())
 
-    fun sendRequest(request: Request): Response? =
+    var login: String? = null
+    var password: String? = null
+
+    fun setCredentials(
+        login: String,
+        password: String,
+    ) {
+        this.login = login
+        this.password = password
+    }
+
+    fun sendRequest(request: Request): Response? {
+        val withCreds = request.copy(login = login, password = password)
+        return try {
+            send(withCreds)
+        } catch (e: IOException) {
+            reconnectAndSend(withCreds)
+        }
+    }
+
+    fun sendRaw(request: Request): Response? =
         try {
             send(request)
         } catch (e: IOException) {

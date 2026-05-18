@@ -14,5 +14,6 @@ class SumOfPrice(
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult = CommandResult(true, "сумма цен: ${collectionManager.sumOfPrice()}")
 }

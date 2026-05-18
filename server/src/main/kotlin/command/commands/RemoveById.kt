@@ -14,14 +14,16 @@ class RemoveById(
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult {
-        val id =
-            args.trim().toLongOrNull()
-                ?: return CommandResult(false, "введите id, к примеру: remove_by_id 5")
-        if (collectionManager.getCollection().none { it.id == id }) {
-            return CommandResult(false, "элемент с id=$id не найден")
+        val owner = ownerLogin ?: return CommandResult(false, "требуется авторизация")
+        val id = args.trim().toLongOrNull() ?: return CommandResult(false, "введите id, например: remove_by_id 5")
+        if (!collectionManager.hasId(id)) return CommandResult(false, "элемент с id=$id не найден")
+        if (collectionManager.getOwner(id) != owner) return CommandResult(false, "нельзя удалить чужой элемент")
+        return if (collectionManager.removeById(id, owner)) {
+            CommandResult(true, "элемент удалён")
+        } else {
+            CommandResult(false, "не удалось удалить элемент")
         }
-        collectionManager.removeById(id)
-        return CommandResult(true, "элемент удалён")
     }
 }
