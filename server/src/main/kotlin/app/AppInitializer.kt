@@ -23,7 +23,7 @@ class AppInitializer {
                 return DatabaseManager(url, user, password)
             } catch (e: Exception) {
                 if (attempt == retries - 1) throw e
-                logger.warning("БД недоступна (попытка ${attempt + 1}/$retries): ${e.message}")
+                logger.warning("БД недоступна, пробую еще раз: ${e.message}")
                 Thread.sleep(3000)
             }
         }

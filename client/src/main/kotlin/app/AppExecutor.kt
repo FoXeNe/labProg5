@@ -12,7 +12,7 @@ class AppExecutor {
         val io = IOWrapper(ConsoleHandler())
         val manager = CommandManager()
         val host = System.getenv("SERVER_HOST") ?: "localhost"
-        val port = System.getenv("SERVER_PORT")?.toIntOrNull() ?: 9090
+        val port = System.getenv("SERVER_PORT")?.toIntOrNull() ?: 45205
         val network = NetworkManager(host, port)
 
         AppInitializer().setup(manager, io, this, network)
