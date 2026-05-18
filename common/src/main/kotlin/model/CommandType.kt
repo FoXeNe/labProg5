@@ -9,6 +9,8 @@ enum class CommandType : Serializable {
     FILTER_BY_MANUFACTURER,
     FILTER_GREATER_THAN_MANUFACTURER,
     INFO,
+    REGISTER,
+    LOGIN,
     REMOVE_BY_ID,
     REMOVE_FIRST,
     SHOW,

@@ -17,15 +17,17 @@ class Update(
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult {
-        val id =
-            args.trim().toLongOrNull()
-                ?: return CommandResult(false, "введите id, к примеру: update 5")
-        if (collectionManager.getCollection().none { it.id == id }) {
-            return CommandResult(false, "элемент с id=$id не найден")
-        }
+        val owner = ownerLogin ?: return CommandResult(false, "требуется авторизация")
+        val id = args.trim().toLongOrNull() ?: return CommandResult(false, "введите id, например: update 5")
+        if (!collectionManager.hasId(id)) return CommandResult(false, "элемент с id=$id не найден")
+        if (collectionManager.getOwner(id) != owner) return CommandResult(false, "нельзя обновить чужой элемент")
         val p = product ?: ProductReader(io).read()
-        collectionManager.updateById(id, p)
-        return CommandResult(true, "элемент обновлён")
+        return if (collectionManager.updateById(id, p, owner)) {
+            CommandResult(true, "элемент обновлён")
+        } else {
+            CommandResult(false, "не удалось обновить элемент")
+        }
     }
 }

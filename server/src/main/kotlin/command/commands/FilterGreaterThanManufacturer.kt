@@ -14,6 +14,7 @@ class FilterGreaterThanManufacturer(
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult {
         val name = args.trim()
         if (name.isBlank()) {

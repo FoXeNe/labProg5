@@ -14,11 +14,17 @@ class RemoveFirst(
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult {
-        if (collectionManager.getCollection().isEmpty()) {
-            return CommandResult(false, "коллекция пустая, невозможно удалить первый элемент")
+        val owner = ownerLogin ?: return CommandResult(false, "требуется авторизация")
+        val collection = collectionManager.getCollection()
+        if (collection.isEmpty()) return CommandResult(false, "коллекция пустая")
+        val first = collection.first()
+        if (collectionManager.getOwner(first.id) != owner) return CommandResult(false, "первый элемент принадлежит другому пользователю")
+        return if (collectionManager.removeFirst(owner)) {
+            CommandResult(true, "первый элемент удалён")
+        } else {
+            CommandResult(false, "не удалось удалить первый элемент")
         }
-        collectionManager.removeFirst()
-        return CommandResult(true, "первый элемент удалён")
     }
 }

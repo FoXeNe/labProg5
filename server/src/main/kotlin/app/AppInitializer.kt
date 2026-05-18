@@ -4,56 +4,51 @@ import command.commands.*
 import io.IOWrapper
 import manager.CollectionManager
 import manager.CommandManager
-import manager.FileManager
-import manager.JsonManager
+import manager.DatabaseManager
 import manager.RequestHandler
-import manager.WalManager
-import model.Product
-import java.io.File
-import java.util.LinkedList
+import manager.UserManager
 import java.util.logging.Logger
-
-const val ENV_FILE = "COLLECTION_FILE"
 
 class AppInitializer {
     private val logger = Logger.getLogger(AppInitializer::class.java.name)
 
+    private fun connectWithRetry(
+        url: String,
+        user: String,
+        password: String,
+        retries: Int = 10,
+    ): DatabaseManager {
+        repeat(retries) { attempt ->
+            try {
+                return DatabaseManager(url, user, password)
+            } catch (e: Exception) {
+                if (attempt == retries - 1) throw e
+                logger.warning("БД недоступна (попытка ${attempt + 1}/$retries): ${e.message}")
+                Thread.sleep(3000)
+            }
+        }
+        throw RuntimeException("не удалось подключиться к БД после $retries попыток")
+    }
+
     fun setup(
         commandManager: CommandManager,
         io: IOWrapper,
-        app: AppExecutor,
     ): RequestHandler {
-        val filePath = System.getenv(ENV_FILE)
-        val walPath = createWalPath(filePath)
-        val walManager = WalManager(walPath)
-        val fileManager = FileManager(filePath, io)
-        var baseCollection: LinkedList<Product>
-        if (filePath == null) {
-            logger.info("путь к файлу не задан")
-            io.println("коллекция не загружена")
-            baseCollection = LinkedList()
-        } else {
-            try {
-                baseCollection = JsonManager(filePath).readCollection()
-                logger.info("коллекция загружена из $filePath")
-                io.println("коллекция загружена")
-            } catch (e: Exception) {
-                logger.warning("не удалось загрузить коллекцию: ${e.message}")
-                io.println("не удалось загрузить коллекцию из файла: ${e.message}")
-                baseCollection = LinkedList()
-            }
-        }
+        val host = System.getenv("DB_HOST") ?: "pg"
+        val port = System.getenv("DB_PORT") ?: "5432"
+        val dbName = System.getenv("DB_NAME") ?: "studs"
+        val dbUser = System.getenv("DB_USER") ?: System.getProperty("user.name") ?: "studs"
+        val dbPassword = System.getenv("DB_PASSWORD") ?: ""
+        val url = "jdbc:postgresql://$host:$port/$dbName"
 
-        val collectionManager = CollectionManager(io, baseCollection, walManager)
+        logger.info("подключение к бд")
+        val db = connectWithRetry(url, dbUser, dbPassword)
+        val userManager = UserManager(db)
 
-        if (walManager.hasEntries()) {
-            val entries = walManager.readAll()
-            for (entry in entries) {
-                collectionManager.replayEntry(entry)
-            }
-            logger.info("операции восстановлены из журнала")
-            io.println("операции восстановлены из журнала")
-        }
+        val initialData = db.loadAll()
+        logger.info("загружено из БД: ${initialData.size} элементов")
+
+        val collectionManager = CollectionManager(db, initialData)
 
         commandManager.register(Add(io, collectionManager))
         commandManager.register(AddIfMin(io, collectionManager))
@@ -61,21 +56,14 @@ class AppInitializer {
         commandManager.register(FilterByManufacturer(collectionManager))
         commandManager.register(FilterGreaterThanManufacturer(collectionManager))
         commandManager.register(Info(collectionManager))
+        commandManager.register(Login())
+        commandManager.register(Register())
         commandManager.register(RemoveById(collectionManager))
         commandManager.register(RemoveFirst(collectionManager))
         commandManager.register(Show(collectionManager))
         commandManager.register(SumOfPrice(collectionManager))
         commandManager.register(Update(io, collectionManager))
-        commandManager.register(Save(collectionManager, fileManager, walManager))
 
-        return RequestHandler(commandManager)
-    }
-
-    private fun createWalPath(mainFilePath: String?): String {
-        if (mainFilePath != null) {
-            return "$mainFilePath.wal"
-        }
-        val tmpDir = System.getProperty("java.io.tmpdir")
-        return File(tmpDir, "collection_session.wal").absolutePath
+        return RequestHandler(commandManager, userManager)
     }
 }

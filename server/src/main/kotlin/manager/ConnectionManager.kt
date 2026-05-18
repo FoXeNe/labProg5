@@ -8,10 +8,9 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
-import java.nio.channels.SelectionKey
-import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+import java.util.concurrent.Executors
 import java.util.logging.Logger
 
 class ConnectionManager(
@@ -20,74 +19,76 @@ class ConnectionManager(
     private val requestHandler: RequestHandler,
 ) {
     private val logger = Logger.getLogger(ConnectionManager::class.java.name)
-    private val selector = Selector.open()
     private val serverChannel = ServerSocketChannel.open()
+    private val readPool = Executors.newFixedThreadPool(4)
+    private val processPool = Executors.newFixedThreadPool(4)
 
     init {
-        serverChannel.configureBlocking(false)
+        serverChannel.configureBlocking(true)
         serverChannel.bind(InetSocketAddress(addr, port))
-        serverChannel.register(selector, SelectionKey.OP_ACCEPT)
         logger.info("сервер слушает $addr:$port")
     }
 
     fun exec() {
-        selector.select(50)
-
-        val keys = selector.selectedKeys().iterator()
-        while (keys.hasNext()) {
-            val key = keys.next()
-            keys.remove()
-            when {
-                key.isAcceptable -> acceptClient()
-                key.isReadable -> readClient(key)
+        while (true) {
+            try {
+                val client = serverChannel.accept() ?: continue
+                logger.info("новое подключение: ${client.remoteAddress}")
+                readPool.submit { handleRead(client) }
+            } catch (e: Exception) {
+                logger.warning("ошибка accept: ${e.message}")
             }
         }
     }
 
-    private fun acceptClient() {
-        val client = serverChannel.accept()
-        if (client == null) return
-        client.configureBlocking(false)
-        client.register(selector, SelectionKey.OP_READ, ClientBuffer())
-        logger.info("новое подключение: ${client.remoteAddress}")
+    private fun handleRead(channel: SocketChannel) {
+        try {
+            val msgBytes =
+                readCompleteMessage(channel) ?: run {
+                    logger.info("клиент отключился: ${channel.remoteAddress}")
+                    try { channel.close() } catch (e: Exception) {}
+                    return
+                }
+            logger.info("получен запрос от ${channel.remoteAddress}")
+            processPool.submit {
+                try {
+                    val request = deserialize(msgBytes)
+                    val response = requestHandler.handle(request)
+                    Thread {
+                        try {
+                            sendResponse(channel, response)
+                            readPool.submit { handleRead(channel) }
+                        } catch (e: Exception) {
+                            logger.warning("ошибка отправки: ${e.message}")
+                            try { channel.close() } catch (ex: Exception) {}
+                        }
+                    }.start()
+                } catch (e: Exception) {
+                    logger.warning("ошибка обработки: ${e.message}")
+                    try { channel.close() } catch (ex: Exception) {}
+                }
+            }
+        } catch (e: Exception) {
+            logger.warning("ошибка чтения: ${e.message}")
+            try { channel.close() } catch (ex: Exception) {}
+        }
     }
 
-    private fun readClient(key: SelectionKey) {
-        val client = key.channel() as SocketChannel
-        val clientBuffer = key.attachment() as ClientBuffer
-        val buffer = ByteBuffer.allocate(4096)
-
-        val bytesRead: Int
-        try {
-            bytesRead = client.read(buffer)
-        } catch (e: Exception) {
-            logger.warning("ошибка чтения ${client.remoteAddress}: ${e.message}")
-            key.cancel()
-            client.close()
-            return
+    private fun readCompleteMessage(channel: SocketChannel): ByteArray? {
+        val lenBuf = ByteBuffer.allocate(4)
+        while (lenBuf.hasRemaining()) {
+            val n = channel.read(lenBuf)
+            if (n == -1) return null
         }
+        lenBuf.flip()
+        val length = lenBuf.int
 
-        if (bytesRead == -1) {
-            logger.info("клиент отключился: ${client.remoteAddress}")
-            key.cancel()
-            client.close()
-            return
+        val msgBuf = ByteBuffer.allocate(length)
+        while (msgBuf.hasRemaining()) {
+            val n = channel.read(msgBuf)
+            if (n == -1) return null
         }
-
-        if (bytesRead > 0) {
-            buffer.flip()
-            clientBuffer.append(buffer.array(), buffer.limit())
-            logger.fine("получено байт: $bytesRead от ${client.remoteAddress}")
-        }
-
-        val msgBytes = clientBuffer.readMessage()
-        if (msgBytes == null) return
-
-        logger.info("получен запрос от ${client.remoteAddress}")
-        val request = deserialize(msgBytes)
-        val response = requestHandler.handle(request)
-        logger.info("отправка ответа клиенту ${client.remoteAddress}")
-        sendResponse(client, response)
+        return msgBuf.array()
     }
 
     private fun sendResponse(
@@ -99,24 +100,21 @@ class ConnectionManager(
         buf.putInt(bytes.size)
         buf.put(bytes)
         buf.flip()
-        while (buf.hasRemaining()) {
-            channel.write(buf)
+        synchronized(channel) {
+            while (buf.hasRemaining()) {
+                channel.write(buf)
+            }
         }
     }
 
     private fun serialize(response: Response): ByteArray {
         val baos = ByteArrayOutputStream()
-        val oos = ObjectOutputStream(baos)
-        oos.writeObject(response)
-        oos.close()
+        ObjectOutputStream(baos).use { it.writeObject(response) }
         return baos.toByteArray()
     }
 
     private fun deserialize(bytes: ByteArray): Request {
         val bais = ByteArrayInputStream(bytes)
-        val ois = ObjectInputStream(bais)
-        val obj = ois.readObject() as Request
-        ois.close()
-        return obj
+        return ObjectInputStream(bais).use { it.readObject() as Request }
     }
 }

@@ -14,5 +14,6 @@ class Info(
     override fun execute(
         args: String,
         product: Product?,
+        ownerLogin: String?,
     ): CommandResult = CommandResult(true, collectionManager.getInfoString())
 }

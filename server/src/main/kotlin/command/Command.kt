@@ -10,5 +10,6 @@ interface Command {
     fun execute(
         args: String,
         product: Product? = null,
+        ownerLogin: String? = null,
     ): CommandResult
 }
